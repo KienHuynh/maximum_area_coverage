@@ -94,7 +94,7 @@ void GUI::cloudClearCallback(Fl_Widget*w, void*data) {
 }
 
 
-void Canvas::fl_normal_draw(float x, float y, float x1, float y1) {
+void Canvas::fl_normal_line(float x, float y, float x1, float y1) {
 	fl_line(x, canvasHeight-y, x1, canvasHeight-y1);
 }
 
@@ -217,26 +217,26 @@ void Canvas::drawAxes() {
 	char dashStyle[3] = { 10,5,0 };
 	fl_color(fl_rgb_color(100, 100, 255));
 	fl_line_style(FL_DASH, 2, dashStyle);
-	fl_normal_draw(origin, origin, origin, origin + squareLength);
-	fl_normal_draw(origin, origin, origin + squareLength, origin);
-	fl_normal_draw(origin + squareLength, origin, origin + squareLength, origin + squareLength);
-	fl_normal_draw(origin, origin + squareLength, origin + squareLength, origin + squareLength);
+	fl_normal_line(origin, origin, origin, origin + squareLength);
+	fl_normal_line(origin, origin, origin + squareLength, origin);
+	fl_normal_line(origin + squareLength, origin, origin + squareLength, origin + squareLength);
+	fl_normal_line(origin, origin + squareLength, origin + squareLength, origin + squareLength);
 
 	// Draw the axes
 	fl_color(fl_rgb_color(50, 50, 200));
 	fl_line_style(FL_SOLID, 2);
 
 	// Horizontal axis
-	fl_normal_draw(origin, origin, origin + axisLength, origin);
+	fl_normal_line(origin, origin, origin + axisLength, origin);
 	// Arrow tip
-	fl_normal_draw(origin + axisLength, origin, origin + axisLength - 7, origin - 5);
-	fl_normal_draw(origin + axisLength, origin, origin + axisLength - 7, origin + 5);
+	fl_normal_line(origin + axisLength, origin, origin + axisLength - 7, origin - 5);
+	fl_normal_line(origin + axisLength, origin, origin + axisLength - 7, origin + 5);
 
 	// Vertical axis
-	fl_normal_draw(origin, origin, origin, origin + axisLength);
+	fl_normal_line(origin, origin, origin, origin + axisLength);
 	// Arrow tip
-	fl_normal_draw(origin, origin + axisLength, origin - 5, origin + axisLength - 7);
-	fl_normal_draw(origin, origin + axisLength, origin + 5, origin + axisLength - 7);
+	fl_normal_line(origin, origin + axisLength, origin - 5, origin + axisLength - 7);
+	fl_normal_line(origin, origin + axisLength, origin + 5, origin + axisLength - 7);
 
 }
 
