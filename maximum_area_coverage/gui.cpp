@@ -2,8 +2,10 @@
 
 int Canvas::canvasWidth = 0;
 int Canvas::canvasHeight = 0;
+PointCloud Canvas::pCloud;
 
-bool GUI::canvasRedrawSignal = 0;
+bool GUI::smallRedrawSignal = 0;
+bool GUI::bigRedrawSignal = 0;
 bool GUI::imageRedrawSignal = 0;
 std::string GUI::canvasFileName = "";
 
@@ -43,7 +45,7 @@ void GUI::browseCallback(Fl_Widget*w, void*data) {
 
 
 	// Flag the signal so that the image box will redraw
-	canvasRedrawSignal = 1;
+	smallRedrawSignal = 1;
 	imageRedrawSignal = 1;
 
 	fprintf(stderr, "--------------------\n");
@@ -82,7 +84,13 @@ void GUI::saveResultCallback(Fl_Widget*w, void*data) {
 
 
 void GUI::maximumAreaCallback(Fl_Widget*w, void*data) {
-	
+	Canvas::pCloud.maximumAreaCoverage();
+}
+
+
+void GUI::cloudClearCallback(Fl_Widget*w, void*data) {
+	Canvas::pCloud.clear();
+	GUI::bigRedrawSignal = 1;
 }
 
 
@@ -104,10 +112,16 @@ int Canvas::handle(int e) {
 		float x = (int)Fl::event_x();
 		float y = (int)Fl::event_y();
 		
-		fl_color(FL_BLUE);
-		fl_pie(x-5, y-5, 10, 10, 0, 360);
+		// Convert x and y to normalized coord
+		y = canvasHeight - y;
+		x = (x - origin) / (float)squareLength;
+		y = (y - origin) / (float)squareLength;
+
+		// Add point to the point cloud data
+		pCloud.insertPoint(x, y);
 
 		ret = 1;
+		GUI::smallRedrawSignal = 1;
 		break;
 	}
 	case FL_PUSH: {
@@ -165,7 +179,21 @@ int Canvas::handle(int e) {
 }
 
 
-void Canvas::draw_coords() {
+void Canvas::drawPoints() {
+	fl_color(fl_rgb_color(255, 150, 50));
+	for (int i = 0; i < pCloud.nPoint; i++) {
+		float x = pCloud.points[i].x;
+		float y = pCloud.points[i].y;
+
+		x = x * (float)squareLength + origin;
+		y = canvasHeight - (y * (float)squareLength + origin);
+
+		fl_pie(((int) x) - 5, ((int) y) - 5, 10, 10, 0, 360);
+	}
+}
+
+
+void Canvas::drawCoords() {
 	// Coordinates as a string
 	char s[80];
 	float x = (float)Fl::event_x();
@@ -180,11 +208,22 @@ void Canvas::draw_coords() {
 	fl_color(FL_WHITE);
 	fl_font(FL_HELVETICA, 18);
 	fl_draw(s, Canvas::canvasWidth - 180 + 7, this->y() + 20);
+
 }
 
 
 void Canvas::drawAxes() {
+	// Draw the square
+	char dashStyle[3] = { 10,5,0 };
+	fl_color(fl_rgb_color(100, 100, 255));
+	fl_line_style(FL_DASH, 2, dashStyle);
+	fl_normal_draw(origin, origin, origin, origin + squareLength);
+	fl_normal_draw(origin, origin, origin + squareLength, origin);
+	fl_normal_draw(origin + squareLength, origin, origin + squareLength, origin + squareLength);
+	fl_normal_draw(origin, origin + squareLength, origin + squareLength, origin + squareLength);
+
 	// Draw the axes
+	fl_color(fl_rgb_color(50, 50, 200));
 	fl_line_style(FL_SOLID, 2);
 
 	// Horizontal axis
@@ -199,26 +238,27 @@ void Canvas::drawAxes() {
 	fl_normal_draw(origin, origin + axisLength, origin - 5, origin + axisLength - 7);
 	fl_normal_draw(origin, origin + axisLength, origin + 5, origin + axisLength - 7);
 
-	// Draw the square
-	char dashStyle[3] = { 10,5,0 };
-	fl_color(fl_rgb_color(100, 100, 255));
-	fl_line_style(FL_DASH, 2, dashStyle);
-	fl_normal_draw(origin, origin, origin, origin + squareLength);
-	fl_normal_draw(origin, origin, origin + squareLength, origin);
-	fl_normal_draw(origin + squareLength, origin, origin + squareLength, origin + squareLength);
-	fl_normal_draw(origin, origin + squareLength, origin + squareLength, origin + squareLength);
 }
 
 
 void Canvas::draw() {
-	if (GUI::canvasRedrawSignal) {
+	if (GUI::smallRedrawSignal) {
 		this->redraw();
-		GUI::canvasRedrawSignal = 0;
+		GUI::smallRedrawSignal = 0;
+	}
+
+	if (GUI::bigRedrawSignal) {
+		// Not sure how do you clear drawn objects in FLTK so I just draw a white rectangle instead
+		// TODO: find out how to properly clear things
+		fl_color(255);
+		fl_rectf(0, 0, canvasWidth, canvasHeight);
+		this->redraw();
+		GUI::bigRedrawSignal = 0;
 	}
 
 	// User damage ONLY? just draw coords and done
 	if (damage() == FL_DAMAGE_USER1) {
-		draw_coords();
+		drawCoords();
 		return;
 	}
 	// Let group draw itself
@@ -231,9 +271,8 @@ void Canvas::draw() {
 
 
 	drawAxes();
-
-	// Draw coords last
-	draw_coords();
+	drawCoords();
+	drawPoints();
 }
 
 
@@ -280,8 +319,10 @@ GUI::GUI(int winWidth, int winHeight) {
 	menu->add("File/Save", FL_CTRL + 's', saveResultCallback);
 
 	// Assign callbacks to corresponding buttons
-	maximumAreaButt = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit, 160, 25, "Estimate brush stroke");
-	maximumAreaButt->callback(maximumAreaCallback);
+	maximumAreaBu = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit, 160, 25, "Run");
+	maximumAreaBu->callback(maximumAreaCallback);
+	clearBu = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit*2, 160, 25, "Clear");
+	clearBu->callback(cloudClearCallback);
 
 	// Create  the actual canvas
 	canvas = new Canvas(0, menuBarHeight, Canvas::canvasWidth, Canvas::canvasHeight, 0);
@@ -294,6 +335,6 @@ GUI::GUI(int winWidth, int winHeight) {
 GUI::~GUI() {
 	delete canvas;
 	delete win;
-	delete exitButt;
-	delete maximumAreaButt;
+	delete exitBu;
+	delete maximumAreaBu;
 }

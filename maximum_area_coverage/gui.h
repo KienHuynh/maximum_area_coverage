@@ -39,8 +39,11 @@ protected:
 	// The draw line function that uses standard coord
 	void fl_normal_draw(float x, float y, float x1, float y1);
 
+	// Draw the points
+	void drawPoints();
+
 	// Draw mouse coords in small black rectangle
-	void draw_coords();
+	void drawCoords();
 
 	// Draw the axes and the unit square
 	void drawAxes();
@@ -63,7 +66,7 @@ public:
 	int squareLength;
 
 	// The data points
-	PointCloud pCloud;
+	static PointCloud pCloud;
 
 	Canvas(int X, int Y, int W, int H, const char *L);
 	~Canvas();
@@ -76,15 +79,19 @@ public:
 	Canvas *canvas;
 
 	// Buttons
-	Fl_Button *exitButt;
-	Fl_Button *maximumAreaButt;
+	Fl_Button *exitBu;
+	Fl_Button *maximumAreaBu;
+	Fl_Button *clearBu;
 	Fl_Menu_Bar *menuBar;
 
 	Fl_Window *win;
 
 	static std::string canvasFileName;
 
-	static bool canvasRedrawSignal;
+	// Small redraw signal informs the canvas that it only needs add more things on the canvas
+	static bool smallRedrawSignal;
+	// Big redraw signal makes the canvas wipe everything, it's a bit slower so normally the small signal is preferred
+	static bool bigRedrawSignal;
 	static bool imageRedrawSignal;
 
 	GUI(int winWidth, int winHeight);
@@ -98,6 +105,8 @@ public:
 	static void saveResultCallback(Fl_Widget*w, void*data);
 	// Callback function for finding the maximum area coverage
 	static void maximumAreaCallback(Fl_Widget*w, void*data);
+	// Callback function to clear the point cloud
+	static void cloudClearCallback(Fl_Widget*w, void*data);
 };
 
 #endif
