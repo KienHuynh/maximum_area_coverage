@@ -31,9 +31,20 @@ public:
 	// This constructor creates n random data points using the given random seed
 	PointCloud(int _nPoint, int _rngSeed);
 
+	// Auxilary functions
+	// Insert a point to the cloud
+	void insertPoint(float x, float y);
+	// Remove the last point, note that it does not remove the first point (0,0)
+	void popPoint();
+	// Clear the cloud
+	void clear();
+
 	// Sort the points to get their indices
 	// The sorted indices will be stored in sortedIdX and sortedIdY
 	void argSort();
+
+	// The main algorithm
+	void maximumAreaCoverage();
 };
 
 
