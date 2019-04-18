@@ -20,6 +20,9 @@
 #include <FL/Fl_File_Chooser.H>
 #include <FL/Fl_Menu_Bar.H>
 
+// Local includes
+#include "pointcloud.h"
+
 // GLOBALS
 static Fl_Input        *G_inptitle = NULL;
 static Fl_Input        *G_inpfilter = NULL;
@@ -33,8 +36,14 @@ protected:
 	// Callback function that handles events through message e, inherited from the group class of FLTK
 	int handle(int e);
 
+	// The draw line function that uses standard coord
+	void fl_normal_draw(float x, float y, float x1, float y1);
+
 	// Draw mouse coords in small black rectangle
 	void draw_coords();
+
+	// Draw the axes and the unit square
+	void drawAxes();
 
 	// The main draw function of canvas
 	void draw();
@@ -48,8 +57,14 @@ public:
 	// The canvas to render the ink
 	float*** canvas;
 
-	// Drawing the current connected components in liveConComs, called when we do an undo or redo
-	void drawLiveConcoms();
+	// Axes and unit square information
+	int axisLength;
+	int origin;
+	int squareLength;
+
+	// The data points
+	PointCloud pCloud;
+
 	Canvas(int X, int Y, int W, int H, const char *L);
 	~Canvas();
 	int mouseX, mouseY;
@@ -60,6 +75,7 @@ class GUI {
 public:
 	Canvas *canvas;
 
+	// Buttons
 	Fl_Button *exitButt;
 	Fl_Button *maximumAreaButt;
 	Fl_Menu_Bar *menuBar;

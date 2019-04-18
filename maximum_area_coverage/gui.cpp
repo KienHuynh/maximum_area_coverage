@@ -86,6 +86,11 @@ void GUI::maximumAreaCallback(Fl_Widget*w, void*data) {
 }
 
 
+void Canvas::fl_normal_draw(float x, float y, float x1, float y1) {
+	fl_line(x, canvasHeight-y, x1, canvasHeight-y1);
+}
+
+
 int Canvas::handle(int e) {
 	int ret = Fl_Group::handle(e);
 	switch (e) {
@@ -163,14 +168,45 @@ int Canvas::handle(int e) {
 void Canvas::draw_coords() {
 	// Coordinates as a string
 	char s[80];
-	sprintf_s(s, "x=%d y=%d", (int)Fl::event_x(), (int)Fl::event_y());
+	float x = (float)Fl::event_x();
+	float y = canvasHeight - (float)Fl::event_y();
+	x = (x - origin) / (float)squareLength;
+	y = (y - origin) / (float)squareLength;
+	sprintf_s(s, "x=%.3f y=%.3f", x, y);
 	// Black rect
 	fl_color(FL_BLACK);
-	fl_rectf(this->x(), this->y(), 120, 25);
+	fl_rectf(Canvas::canvasWidth-180, this->y(), 180, 25);
 	// White text
 	fl_color(FL_WHITE);
 	fl_font(FL_HELVETICA, 18);
-	fl_draw(s, this->x() + 7, this->y() + 20);
+	fl_draw(s, Canvas::canvasWidth - 180 + 7, this->y() + 20);
+}
+
+
+void Canvas::drawAxes() {
+	// Draw the axes
+	fl_line_style(FL_SOLID, 2);
+
+	// Horizontal axis
+	fl_normal_draw(origin, origin, origin + axisLength, origin);
+	// Arrow tip
+	fl_normal_draw(origin + axisLength, origin, origin + axisLength - 7, origin - 5);
+	fl_normal_draw(origin + axisLength, origin, origin + axisLength - 7, origin + 5);
+
+	// Vertical axis
+	fl_normal_draw(origin, origin, origin, origin + axisLength);
+	// Arrow tip
+	fl_normal_draw(origin, origin + axisLength, origin - 5, origin + axisLength - 7);
+	fl_normal_draw(origin, origin + axisLength, origin + 5, origin + axisLength - 7);
+
+	// Draw the square
+	char dashStyle[3] = { 10,5,0 };
+	fl_color(fl_rgb_color(100, 100, 255));
+	fl_line_style(FL_DASH, 2, dashStyle);
+	fl_normal_draw(origin, origin, origin, origin + squareLength);
+	fl_normal_draw(origin, origin, origin + squareLength, origin);
+	fl_normal_draw(origin + squareLength, origin, origin + squareLength, origin + squareLength);
+	fl_normal_draw(origin, origin + squareLength, origin + squareLength, origin + squareLength);
 }
 
 
@@ -192,23 +228,27 @@ void Canvas::draw() {
 		fl_color(FL_BLACK);
 		fl_font(FL_COURIER, 80);
 	}
+
+
+	drawAxes();
+
 	// Draw coords last
 	draw_coords();
-	drawLiveConcoms();
-}
-
-
-void Canvas::drawLiveConcoms() {
-	
 }
 
 
 Canvas::Canvas(int X, int Y, int W, int H, const char *L = 0) : Fl_Group(X, Y, W, H, L) {
 	canvas = new float**[H];
 
+	// Create a white background
 	imageBox = new Fl_Box(0, 0, W, H, "Canvas");
 	imageBox->color(255);
 	color(255);
+
+	// TODO: Create the x / y axis
+	axisLength = ((W < H ? W : H)) * 0.9;
+	origin = ((W < H ? W : H)) * 0.05;
+	squareLength = ((W < H ? W : H)) * 0.8;
 }
 
 
@@ -218,24 +258,32 @@ Canvas::~Canvas() {
 
 
 GUI::GUI(int winWidth, int winHeight) {
+	// Init the main window
 	win = new Fl_Window(winWidth, winHeight);
 	win->color(255);
+
+	// Init the top menu bar
 	int menuBarWidth = 1080;
 	int menuBarHeight = 25;
 
+	// Init the canvas for drawing / displaying points
 	Canvas::canvasWidth = winHeight - menuBarHeight;
 	Canvas::canvasHeight = winHeight - menuBarHeight;
 
+	// Init the width/height unit of the buttons
 	int yButtonUnit = winHeight / 16;
 	int xButtonUnit = winWidth / 8;
 
+	// Init the menu bar and create related menu options
 	Fl_Menu_Bar *menu = new Fl_Menu_Bar(0, 0, winWidth, menuBarHeight);
 	menu->add("File/Open", FL_CTRL + 'o', browseCallback);
 	menu->add("File/Save", FL_CTRL + 's', saveResultCallback);
 
+	// Assign callbacks to corresponding buttons
 	maximumAreaButt = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit, 160, 25, "Estimate brush stroke");
 	maximumAreaButt->callback(maximumAreaCallback);
 
+	// Create  the actual canvas
 	canvas = new Canvas(0, menuBarHeight, Canvas::canvasWidth, Canvas::canvasHeight, 0);
 
 	win->resizable(win);
