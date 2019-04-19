@@ -99,6 +99,7 @@ void Canvas::fl_normal_line(float x, float y, float x1, float y1) {
 }
 
 
+// Function to handle mouse events such as drag, release, etc.
 int Canvas::handle(int e) {
 	int ret = Fl_Group::handle(e);
 	switch (e) {
@@ -117,8 +118,10 @@ int Canvas::handle(int e) {
 		x = (x - origin) / (float)squareLength;
 		y = (y - origin) / (float)squareLength;
 
-		// Add point to the point cloud data
-		pCloud.insertPoint(x, y);
+		if (!(x < 0 || y < 0 || x > 1 || y > 1)) {
+			// Add point to the point cloud data
+			pCloud.insertPoint(x, y);
+		}
 
 		ret = 1;
 		GUI::smallRedrawSignal = 1;
