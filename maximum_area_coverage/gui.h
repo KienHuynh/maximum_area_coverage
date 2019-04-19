@@ -37,7 +37,7 @@ protected:
 	int handle(int e);
 
 	// The draw line function that uses standard coord
-	void fl_normal_draw(float x, float y, float x1, float y1);
+	void fl_normal_line(float x, float y, float x1, float y1);
 
 	// Draw the points
 	void drawPoints();
