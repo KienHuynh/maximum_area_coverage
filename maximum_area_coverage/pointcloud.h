@@ -25,6 +25,8 @@ public:
 	std::vector<int> sortedIdX;
 	// Store the sorted indices of the points according to their y-coords
 	std::vector<int> sortedIdY;
+	// Flag that marks if a point is in the frontier or not
+	std::vector<bool> frontier;
 
 	// Default constructor, create an empty point cloud
 	PointCloud();
@@ -39,9 +41,16 @@ public:
 	// Clear the cloud
 	void clear();
 
+
+	// Find max x and y of the points
+	void findMax(float &x, float &y);
+
 	// Sort the points to get their indices
 	// The sorted indices will be stored in sortedIdX and sortedIdY
 	void argSort();
+
+	// Find the North-East frontier
+	void findNEFrontier();
 
 	// The main algorithm
 	void maximumAreaCoverage();
