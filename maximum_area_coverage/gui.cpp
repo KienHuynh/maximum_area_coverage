@@ -85,6 +85,7 @@ void GUI::saveResultCallback(Fl_Widget*w, void*data) {
 
 void GUI::maximumAreaCallback(Fl_Widget*w, void*data) {
 	Canvas::pCloud.maximumAreaCoverage();
+	bigRedrawSignal = true;
 }
 
 
@@ -183,7 +184,7 @@ int Canvas::handle(int e) {
 
 
 void Canvas::drawPoints() {
-	fl_color(fl_rgb_color(255, 150, 50));
+	
 	for (int i = 0; i < pCloud.nPoint; i++) {
 		float x = pCloud.points[i].x;
 		float y = pCloud.points[i].y;
@@ -191,6 +192,12 @@ void Canvas::drawPoints() {
 		x = x * (float)squareLength + origin;
 		y = canvasHeight - (y * (float)squareLength + origin);
 
+		if (!pCloud.frontier[i]) {
+			fl_color(fl_rgb_color(255, 150, 50));
+		}
+		else {
+			fl_color(fl_rgb_color(50, 255, 150));
+		}
 		fl_pie(((int) x) - 5, ((int) y) - 5, 10, 10, 0, 360);
 	}
 }
