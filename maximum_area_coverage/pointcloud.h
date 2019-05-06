@@ -71,8 +71,12 @@ public:
 	// It will return if cd is left, right, above or below ab
 	Position edgeTouch(Point2D a, Point2D b, Point2D c, Point2D d);
 
+	// Check if 2 edges align and form a new longer edge
+	bool edgeAlign(Point2D a, Point2D b, Point2D c, Point2D d);
+
 	// Merge a polygon with another
 	void merge(Polygon2D p);
+	void merge(Rectangle2D r);
 };
 
 
@@ -90,6 +94,9 @@ public:
 	// The same variables to store the result
 	std::vector<Point2D> resultPoints;
 	std::vector<Rectangle2D> resultRects;
+
+	// The polygon that wrap around the rectangles
+	Polygon2D boundingPoly;
 
 	// Store the sorted indices of the points according to their x-coords
 	std::vector<int> sortedIdX;

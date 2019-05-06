@@ -111,25 +111,90 @@ Position Polygon2D::edgeTouch(Point2D a, Point2D b, Point2D c, Point2D d) {
 }
 
 
+bool Polygon2D::edgeAlign(Point2D a, Point2D b, Point2D c, Point2D d) {
+	if (b.x == c.x && b.y == c.y) {
+		if (a.x == b.x) { // Vertical
+			if ((b.y - a.y) * (d.y - c.y) > 0) return true;
+			else return false;
+		}
+		else { // Horizontal
+			if ((b.x - a.x) * (d.x - c.x) > 0) return true;
+			else return false;
+		}
+	}
+	return false;
+}
+
+
 void Polygon2D::merge(Polygon2D p) {
-	if (points.size() == 0) points = p.points;
+	if (points.size() == 0) {
+		points = p.points;
+		return;
+	}
 	int n = points.size();
 	int m = p.points.size();
-	for (int i = 0; i < n; i++) {
+	bool stop = false;
+	for (int i = 0; i < n && !stop; i++) {
+		for (int j = 0; j < m && !stop; j++) {
+			if (edgeAlign(points[i], points[(i + 1) % n], p.points[j], p.points[(j + 1) % m])) {
+				// Since points[i+1] and p.points[j] are the same, they are the merging point
+				// Don't add them and remove points[i+1] later
+				// Another special case, check if points[i+2] is the same as p.points[j+3]
+				// Don't add them and remove points[i+2] later
+				
+				// points:    i i+1 i+2 i+3
+				// new index: i i+i i+2 i+3
+				points.insert(points.begin() + i + 1, p.points[(j + 1) % m]);
+				
+				// points:    i j+1 i+1 i+2 i+3
+				// new index: i i+i i+2 i+3 i+4
+				points.insert(points.begin() + i + 1 + 1, p.points[(j + 2) % m]);
+				
+				// points:    i j+1 j+2 i+1 i+2 i+3
+				// new index: i i+i i+2 i+3 i+4 i+5
 
-		for (int j = 0; j < m; j++) {
+				n = points.size();
+				if (points[(i + 5) % n].x == p.points[(j + 3) % m].x &&
+					points[(i + 5) % n].y == p.points[(j + 3) % m].y) {
+					// Also a merging point, remove i+5
+					points.erase(points.begin() + ((i + 5) % n));
+				}
+				else {
+					points.insert(points.begin() + i + 1 + 2, p.points[(j + 3) % m]);
+				}
+
+				// Remove the first merging point i+1 (old index) / i+3 (new index)
+				points.erase(points.begin() + (i+3));
+				stop = true;
+				continue;
+			}
+
 			switch (edgeTouch(points[i], points[(i + 1) % n], p.points[j], p.points[(j + 1) % m])) {
 			case left:
+			case below:
+				points.insert(points.begin() + i + 1, p.points[(j + 1) % m]);
+				points.insert(points.begin() + i + 1 + 1, p.points[(j + 2) % m]);
+				points.insert(points.begin() + i + 1 + 2, p.points[(j + 3) % m]);
+				points.insert(points.begin() + i + 1 + 3, p.points[(j + 4) % m]);
+				stop = true;
 				break;
 			case right:
-				break;
 			case above:
-				break;
-			case below:
+				points.insert(points.begin() + i + 1, p.points[j]);
+				points.insert(points.begin() + i + 1 + 1, p.points[(j + 1) % m]);
+				points.insert(points.begin() + i + 1 + 2, p.points[(j + 2) % m]);
+				points.insert(points.begin() + i + 1 + 3, p.points[(j + 3) % m]);
+				stop = true;
 				break;
 			}
 		}
 	}
+}
+
+
+void Polygon2D::merge(Rectangle2D r) {
+	Polygon2D p(r);
+	merge(p);
 }
 
 
@@ -383,6 +448,8 @@ void PointCloud::greedySearch(std::vector<Point2D> &upperBoundary) {
 		upperBoundary.push_back(Point2D(bestRect.botLeft.x, bestRect.botLeft.y));
 		upperBoundary.push_back(Point2D(bestRect.topRight.x, bestRect.botLeft.y));
 		removePoint(upperBoundary, Point2D(bestRect.topRight.x, bestRect.topRight.y));
+		boundingPoly.merge(bestRect);
+
 		//binaryInsert(upperBoundary, Point2D(bestRect.topRight.x, bestRect.topRight.y), 0, upperBoundary.size() - 1);
 		//upperBoundaryUpdate(upperBoundary);
 	}
