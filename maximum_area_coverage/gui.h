@@ -48,8 +48,14 @@ protected:
 	// Draw the axes and the unit square
 	void drawAxes();
 
+	// Draw the rectangles
+	void drawRects();
+
 	// The main draw function of canvas
 	void draw();
+
+	// Convert 0-1 coords to canvas coord
+	void float2CanvasCoord(float &x, float &y);
 
 public:
 	// Box to display the background image

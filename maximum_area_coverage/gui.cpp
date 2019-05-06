@@ -85,7 +85,7 @@ void GUI::saveResultCallback(Fl_Widget*w, void*data) {
 
 void GUI::maximumAreaCallback(Fl_Widget*w, void*data) {
 	Canvas::pCloud.maximumAreaCoverage();
-	bigRedrawSignal = true;
+	GUI::bigRedrawSignal = true;
 }
 
 
@@ -183,22 +183,63 @@ int Canvas::handle(int e) {
 }
 
 
+void Canvas::float2CanvasCoord(float &x, float &y) {
+	x = x * (float)squareLength + origin;
+	y = canvasHeight - (y * (float)squareLength + origin);
+}
+
+
 void Canvas::drawPoints() {
-	
-	for (int i = 0; i < pCloud.nPoint; i++) {
+	fl_color(fl_rgb_color(255, 150, 50));
+	for (int i = 0; i < pCloud.points.size(); i++) {
 		float x = pCloud.points[i].x;
 		float y = pCloud.points[i].y;
 
-		x = x * (float)squareLength + origin;
-		y = canvasHeight - (y * (float)squareLength + origin);
-
-		if (!pCloud.frontier[i]) {
-			fl_color(fl_rgb_color(255, 150, 50));
-		}
-		else {
-			fl_color(fl_rgb_color(50, 255, 150));
-		}
+		float2CanvasCoord(x, y);
 		fl_pie(((int) x) - 5, ((int) y) - 5, 10, 10, 0, 360);
+	}
+
+	/*fl_color(fl_rgb_color(50, 255, 150));
+	for (int i = 0; i < pCloud.resultPoints.size(); i++) {
+		float x = pCloud.resultPoints[i].x;
+		float y = pCloud.resultPoints[i].y;
+
+		float2CanvasCoord(x, y);
+		fl_pie(((int)x) - 5, ((int)y) - 5, 10, 10, 0, 360);
+	}*/
+
+	fl_color(fl_rgb_color(255, 0, 255));
+	for (int i = 0; i < pCloud.upperBoundary.size(); i++) {
+		float x = pCloud.upperBoundary[i].x;
+		float y = pCloud.upperBoundary[i].y;
+
+		float2CanvasCoord(x, y);
+		fl_pie(((int)x) - 5, ((int)y) - 5, 10, 10, 0, 360);
+	}
+}
+
+
+void Canvas::drawRects() {
+	
+	for (int i = 0; i < pCloud.resultRects.size(); i++) {
+		fl_color(fl_rgb_color(50, 50, 150));
+		float x1 = pCloud.resultRects[i].botLeft.x;
+		float y1 = pCloud.resultRects[i].topRight.y;
+		float x2 = pCloud.resultRects[i].topRight.x;
+		float y2 = pCloud.resultRects[i].botLeft.y;
+
+		float2CanvasCoord(x1, y1);
+		float2CanvasCoord(x2, y2);
+
+		fl_rectf((int)x1, (int)y1, (int)(x2 - x1), (int)(y2 - y1));
+
+		fl_color(fl_rgb_color(50, 50, 50));
+		fl_begin_loop();
+		fl_vertex(x1, y1);
+		fl_vertex(x2, y1);
+		fl_vertex(x2, y2);
+		fl_vertex(x1, y2);
+		fl_end_loop();
 	}
 }
 
@@ -282,6 +323,7 @@ void Canvas::draw() {
 
 	drawAxes();
 	drawCoords();
+	drawRects();
 	drawPoints();
 }
 
