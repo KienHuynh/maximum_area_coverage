@@ -61,12 +61,82 @@ float Rectangle2D::area() {
 }
 
 
+Polygon2D::Polygon2D() {
+
+}
+
+
+void Polygon2D::set(Rectangle2D r) {
+	points.push_back(r.botLeft);
+	points.push_back(Point2D(r.topRight.x, r.botLeft.y));
+	points.push_back(r.topRight);
+	points.push_back(Point2D(r.botLeft.x, r.topRight.y));
+}
+
+
+Polygon2D::Polygon2D(Rectangle2D r) {
+	set(r);
+}
+
+
+Polygon2D Polygon2D::rect2Poly(Rectangle2D r) {
+	Polygon2D p(r);
+	return p;
+}
+
+
+Position Polygon2D::edgeTouch(Point2D a, Point2D b, Point2D c, Point2D d) {
+	// TODO: check special case where b == c
+
+	if (a.x == b.x) {
+		if (c.x == d.x && a.x == c.x) {
+			if (d.y - c.y > 0) return left;
+			else return right;
+		}
+		else {
+			// ab is vertical but cd is horizontal
+			return nope;
+		}
+	}
+	else { // a.y == b.y
+		if (c.y == d.y && a.y == c.y) {
+			if (d.x - c.x > 0) return above;
+			else return below;
+		}
+		else {
+			return nope;
+		}
+	}
+	return nope;
+}
+
+
+void Polygon2D::merge(Polygon2D p) {
+	if (points.size() == 0) points = p.points;
+	int n = points.size();
+	int m = p.points.size();
+	for (int i = 0; i < n; i++) {
+
+		for (int j = 0; j < m; j++) {
+			switch (edgeTouch(points[i], points[(i + 1) % n], p.points[j], p.points[(j + 1) % m])) {
+			case left:
+				break;
+			case right:
+				break;
+			case above:
+				break;
+			case below:
+				break;
+			}
+		}
+	}
+}
+
+
 PointCloud::PointCloud() {
 	points.push_back(Point2D(0, 0));
 	rects.push_back(Rectangle2D(points[0], points[0]));
 	upperBoundary.push_back(Point2D(1, 1));
-	gridX.push_back(1);
-	gridY.push_back(1);
 	frontier.push_back(false);
 }
 
@@ -75,8 +145,6 @@ PointCloud::PointCloud(int _nPpoints, int _rngSeed) {
 	points.push_back(Point2D(0, 0));
 	rects.push_back(Rectangle2D(points[0], points[0]));
 	upperBoundary.push_back(Point2D(1, 1));
-	gridX.push_back(1);
-	gridY.push_back(1);
 	frontier.push_back(false);
 }
 
@@ -105,6 +173,19 @@ void PointCloud::clear() {
 	upperBoundary.clear();
 	upperBoundary.push_back(Point2D(1, 1));
 	frontier.push_back(false);
+}
+
+
+void PointCloud::randomGen(int n) {
+	for (int i = 0; i < n; i++) {
+		float x = 0;
+		float y = 0;
+		while (x == 0 && y == 0) {
+			x = ((float) (rand() % 10000)) / 10000.0;
+			y = ((float) (rand() % 10000)) / 10000.0;
+		}
+		insertPoint(x, y);
+	}
 }
 
 
@@ -183,14 +264,20 @@ void PointCloud::removePoint(std::vector<Point2D> &v, Point2D p) {
 }
 
 
-std::vector<Point2D> PointCloud::enumerateGrid(std::vector<Point2D> points) {
-	std::vector<Point2D> grid;
+std::set<Point2D> PointCloud::enumerateGrid(std::vector<Point2D> points) {
+	std::set<Point2D> grid;
 	for (int i = 0; i < points.size(); i++) {
 		for (int j = 0; j < points.size(); j++) {
-			grid.push_back(Point2D(points[i].x, points[j].y));
+			grid.insert(Point2D(points[i].x, points[j].y));
 		}
 	}
 	return grid;
+}
+
+
+void PointCloud::removeHoles(std::vector<Point2D> &upperBoundary) {
+	// Find the outline of the rectangle group
+	// Starting from (1,1) because it will always be there.
 }
 
 
@@ -256,27 +343,26 @@ void PointCloud::greedySearch(std::vector<Point2D> &upperBoundary) {
 	}
 
 	while (frontierPoints.size() > 0) {
-		int bestJ = 0, bestK = 0;
+		int bestJ = 0;
 		float bestArea = 0;
 		Rectangle2D bestRect(Point2D(0, 0), Point2D(0, 0));
-		std::vector<Point2D> grid = enumerateGrid(upperBoundary);
+		std::set<Point2D> grid = enumerateGrid(upperBoundary);
 
 		for (int j = 0; j < frontierPoints.size(); j++) {
 			
-			for (int k = 0; k < grid.size(); k++) {
+			for (std::set<Point2D>::iterator it = grid.begin(); it != grid.end(); it++) {
 				// Check if point k is to the right of j
-				if (grid[k].x <= frontierPoints[j].x) continue;
+				if (it->x <= frontierPoints[j].x) continue;
 
 				// Check if point k is above point j
-				if (grid[k].y <= frontierPoints[j].y) continue;
+				if (it->y <= frontierPoints[j].y) continue;
 
 				//if (upperBoundary[k].y > lowestY) break;
-				Rectangle2D tmpRect = Rectangle2D(frontierPoints[j], grid[k]);
+				Rectangle2D tmpRect = Rectangle2D(frontierPoints[j], (*it));
 
-				float areaJK = frontierPoints[j].area(grid[k]);
+				float areaJK = frontierPoints[j].area((*it));
 				if (areaJK > bestArea && !tmpRect.intersectCheck(resultRects)) {
 					bestJ = j;
-					bestK = k;
 					bestArea = areaJK;
 					bestRect = tmpRect;
 				}
@@ -307,4 +393,13 @@ void PointCloud::maximumAreaCoverage() {
 	// First iteration
 	findNEFrontier();
 	greedySearch(upperBoundary);
+}
+
+
+float PointCloud::area() {
+	float total = 0;
+	for (int i = 0; i < resultRects.size(); i++) {
+		total += resultRects[i].area();
+	}
+	return total;
 }
