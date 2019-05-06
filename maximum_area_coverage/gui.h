@@ -54,6 +54,9 @@ protected:
 	// Display the area of the rectangles
 	void drawArea();
 
+	// Draw the bounding polygon
+	void drawPoly();
+
 	// The main draw function of canvas
 	void draw();
 

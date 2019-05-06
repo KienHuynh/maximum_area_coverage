@@ -228,7 +228,7 @@ void Canvas::drawPoints() {
 void Canvas::drawRects() {
 	
 	for (int i = 0; i < pCloud.resultRects.size(); i++) {
-		fl_color(fl_rgb_color(50, 50, 150));
+		fl_color(fl_rgb_color(50, 150, 255));
 		float x1 = pCloud.resultRects[i].botLeft.x;
 		float y1 = pCloud.resultRects[i].topRight.y;
 		float x2 = pCloud.resultRects[i].topRight.x;
@@ -240,6 +240,7 @@ void Canvas::drawRects() {
 		fl_rectf((int)x1, (int)y1, (int)(x2 - x1), (int)(y2 - y1));
 
 		fl_color(fl_rgb_color(50, 50, 50));
+		fl_line_style(FL_SOLID, 2);
 		fl_begin_loop();
 		fl_vertex(x1, y1);
 		fl_vertex(x2, y1);
@@ -247,6 +248,23 @@ void Canvas::drawRects() {
 		fl_vertex(x1, y2);
 		fl_end_loop();
 	}
+}
+
+
+void Canvas::drawPoly() {
+	fl_begin_loop();
+	for (int i = 0; i < pCloud.boundingPoly.points.size(); i++) {
+		fl_color(fl_rgb_color(255, 0, 50));
+		float x = pCloud.boundingPoly.points[i].x;
+		float y = pCloud.boundingPoly.points[i].y;
+
+		float2CanvasCoord(x, y);
+
+		fl_line_style(FL_SOLID, 2);
+		
+		fl_vertex(x, y);
+	}
+	fl_end_loop();
 }
 
 
@@ -346,6 +364,7 @@ void Canvas::draw() {
 	drawCoords();
 	drawArea();
 	drawRects();
+	drawPoly();
 	drawPoints();
 }
 
