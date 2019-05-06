@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <set>
+#include <map>
 #include <algorithm>
 #include <math.h>
 
@@ -30,6 +31,14 @@ public:
 		}
 		return false;
 	}
+
+	bool operator==(const Point2D &p) const {
+		if (x == p.x && y == p.y) return true;
+		return false;
+	}
+
+	static bool compareX(Point2D a, Point2D b);
+	static bool compareY(Point2D a, Point2D b);
 };
 
 
@@ -71,7 +80,7 @@ public:
 	// It will return if cd is left, right, above or below ab
 	Position edgeTouch(Point2D a, Point2D b, Point2D c, Point2D d);
 
-	// Check if 2 edges align and form a new longer edge
+	// Check if 2 edges align so we can form a new longer edge
 	bool edgeAlign(Point2D a, Point2D b, Point2D c, Point2D d);
 
 	// Merge a polygon with another
@@ -117,6 +126,8 @@ public:
 	void popPoint();
 	// Clear the cloud
 	void clear();
+	// Load from file
+	void loadFromFile(const char* fname);
 
 	// Randomly generate points in the range 0-1
 	void randomGen(int n);

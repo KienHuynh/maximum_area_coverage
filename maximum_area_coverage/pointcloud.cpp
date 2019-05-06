@@ -18,6 +18,20 @@ float Point2D::area(Point2D p) {
 }
 
 
+bool Point2D::compareX(Point2D a, Point2D b) {
+	if (a.x < b.x || (a.x == b.x && a.y < b.y)) return true;
+	else if (a == b) return false;
+	return false;
+}
+
+
+bool Point2D::compareY(Point2D a, Point2D b) {
+	if (a.y < b.y || (a.y == b.y && a.x < b.x)) return true;
+	else if (a == b) return false;
+	return false;
+}
+
+
 Rectangle2D::Rectangle2D() {
 	botLeft = Point2D(-1, -1);
 	topRight = Point2D(-1, -1);
@@ -131,64 +145,84 @@ void Polygon2D::merge(Polygon2D p) {
 		points = p.points;
 		return;
 	}
-	int n = points.size();
-	int m = p.points.size();
-	bool stop = false;
-	for (int i = 0; i < n && !stop; i++) {
-		for (int j = 0; j < m && !stop; j++) {
-			if (edgeAlign(points[i], points[(i + 1) % n], p.points[j], p.points[(j + 1) % m])) {
-				// Since points[i+1] and p.points[j] are the same, they are the merging point
-				// Don't add them and remove points[i+1] later
-				// Another special case, check if points[i+2] is the same as p.points[j+3]
-				// Don't add them and remove points[i+2] later
-				
-				// points:    i i+1 i+2 i+3
-				// new index: i i+i i+2 i+3
-				points.insert(points.begin() + i + 1, p.points[(j + 1) % m]);
-				
-				// points:    i j+1 i+1 i+2 i+3
-				// new index: i i+i i+2 i+3 i+4
-				points.insert(points.begin() + i + 1 + 1, p.points[(j + 2) % m]);
-				
-				// points:    i j+1 j+2 i+1 i+2 i+3
-				// new index: i i+i i+2 i+3 i+4 i+5
-
-				n = points.size();
-				if (points[(i + 5) % n].x == p.points[(j + 3) % m].x &&
-					points[(i + 5) % n].y == p.points[(j + 3) % m].y) {
-					// Also a merging point, remove i+5
-					points.erase(points.begin() + ((i + 5) % n));
-				}
-				else {
-					points.insert(points.begin() + i + 1 + 2, p.points[(j + 3) % m]);
-				}
-
-				// Remove the first merging point i+1 (old index) / i+3 (new index)
-				points.erase(points.begin() + (i+3));
-				stop = true;
-				continue;
-			}
-
-			switch (edgeTouch(points[i], points[(i + 1) % n], p.points[j], p.points[(j + 1) % m])) {
-			case left:
-			case below:
-				points.insert(points.begin() + i + 1, p.points[(j + 1) % m]);
-				points.insert(points.begin() + i + 1 + 1, p.points[(j + 2) % m]);
-				points.insert(points.begin() + i + 1 + 2, p.points[(j + 3) % m]);
-				points.insert(points.begin() + i + 1 + 3, p.points[(j + 4) % m]);
-				stop = true;
-				break;
-			case right:
-			case above:
-				points.insert(points.begin() + i + 1, p.points[j]);
-				points.insert(points.begin() + i + 1 + 1, p.points[(j + 1) % m]);
-				points.insert(points.begin() + i + 1 + 2, p.points[(j + 2) % m]);
-				points.insert(points.begin() + i + 1 + 3, p.points[(j + 3) % m]);
-				stop = true;
+	// Remove same points between the 2 polygons
+	std::vector<int> marker;
+	for (int i = 0; i < points.size(); i++) {
+		for (int j = 0; j < p.points.size(); j++) {
+			if (points[i] == p.points[j]) {
+				marker.push_back(i);
+				p.points.erase(p.points.begin() + j);
 				break;
 			}
 		}
 	}
+
+	for (int i = marker.size()-1; i >= 0; i--) {
+		points.erase(points.begin() + marker[i]);
+	}
+
+	for (int i = 0; i < p.points.size(); i++) {
+		points.push_back(p.points[i]);
+	}
+
+	std::vector<Point2D> sortedX = points, sortedY = points;
+	std::map<Point2D, Point2D> edgeH, edgeV;
+
+	std::sort(sortedX.begin(), sortedX.end(), Point2D::compareX);
+	std::sort(sortedY.begin(), sortedY.end(), Point2D::compareY);
+
+	// Enumerate the horizontal edges
+	for (int i = 0; i < points.size(); ) {
+		float currY = sortedY[i].y;
+		
+		for (; i < points.size() && sortedY[i].y == currY; i = i + 2) {
+			edgeH.insert(std::pair<Point2D, Point2D>(sortedY[i], sortedY[i+1]));
+			edgeH.insert(std::pair<Point2D, Point2D>(sortedY[i+1], sortedY[i]));
+		}
+	}
+
+	// Enumerate the vertical edges
+	for (int i = 0; i < points.size(); ) {
+		float currX = sortedX[i].x;
+
+		for (; i < points.size() && sortedX[i].x == currX; i = i + 2) {
+			edgeV.insert(std::pair<Point2D, Point2D>(sortedX[i], sortedX[i + 1]));
+			edgeV.insert(std::pair<Point2D, Point2D>(sortedX[i + 1], sortedX[i]));
+		}
+	}
+
+	std::vector<std::vector<Point2D>> allPoly;
+	
+	while (edgeH.size() > 0) {
+		std::vector<Point2D> poly;
+		poly.push_back(edgeH.begin()->first);
+		edgeH.erase(edgeH.begin());
+		
+		for (int i = 0; ; i++) {
+			Point2D latest = poly[poly.size() - 1];
+			Point2D next;
+			if (i % 2 == 0) {
+				next = edgeV[latest];
+				edgeV.erase(latest);
+			}
+			else {
+				next = edgeH[latest];
+				edgeH.erase(latest);
+			}
+			poly.push_back(next);
+			if (poly[0] == poly[poly.size() - 1]) {
+				poly.pop_back();
+				break;
+			}
+		}
+		for (int i = 0; i < poly.size(); i++) {
+			edgeH.erase(poly[i]);
+			edgeV.erase(poly[i]);
+		}
+
+		allPoly.push_back(poly);
+	}
+	points = allPoly[0];
 }
 
 
@@ -288,9 +322,19 @@ void PointCloud::findNEFrontier() {
 }
 
 
-void PointCloud::argSort() {
-	//TODO
+void PointCloud::loadFromFile(const char* fname) {
+	std::ifstream myfile;
+	myfile.open(fname, std::ios::in);
+	int nPoints = 0, *conComSizes = NULL, dump;
 
+	myfile >> nPoints;
+	for (int i = 0; i < nPoints; i++) {
+		float x, y;
+		myfile >> x >> y;
+		insertPoint(x, y);
+	}
+
+	myfile.close();
 }
 
 
@@ -444,11 +488,12 @@ void PointCloud::greedySearch(std::vector<Point2D> &upperBoundary) {
 		//binaryInsert(upperBoundary, Point2D(bestRect.botLeft.x, bestRect.topRight.y), 0, upperBoundary.size() - 1);
 		//binaryInsert(upperBoundary, Point2D(bestRect.botLeft.x, bestRect.botLeft.y), 0, upperBoundary.size() - 1);
 		//binaryInsert(upperBoundary, Point2D(bestRect.topRight.x, bestRect.botLeft.y), 0, upperBoundary.size() - 1);
-		upperBoundary.push_back(Point2D(bestRect.botLeft.x, bestRect.topRight.y));
-		upperBoundary.push_back(Point2D(bestRect.botLeft.x, bestRect.botLeft.y));
-		upperBoundary.push_back(Point2D(bestRect.topRight.x, bestRect.botLeft.y));
-		removePoint(upperBoundary, Point2D(bestRect.topRight.x, bestRect.topRight.y));
+		//upperBoundary.push_back(Point2D(bestRect.botLeft.x, bestRect.topRight.y));
+		//upperBoundary.push_back(Point2D(bestRect.botLeft.x, bestRect.botLeft.y));
+		//upperBoundary.push_back(Point2D(bestRect.topRight.x, bestRect.botLeft.y));
+		//removePoint(upperBoundary, Point2D(bestRect.topRight.x, bestRect.topRight.y));
 		boundingPoly.merge(bestRect);
+		upperBoundary = boundingPoly.points;
 
 		//binaryInsert(upperBoundary, Point2D(bestRect.topRight.x, bestRect.topRight.y), 0, upperBoundary.size() - 1);
 		//upperBoundaryUpdate(upperBoundary);
