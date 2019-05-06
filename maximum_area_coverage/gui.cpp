@@ -8,7 +8,7 @@ bool GUI::smallRedrawSignal = 0;
 bool GUI::bigRedrawSignal = 0;
 bool GUI::imageRedrawSignal = 0;
 std::string GUI::canvasFileName = "";
-
+Canvas* GUI::canvas = NULL;
 
 void GUI::exitCallback(Fl_Widget*w, void*data) {
 	exit(0);
@@ -45,9 +45,13 @@ void GUI::browseCallback(Fl_Widget*w, void*data) {
 
 
 	// Flag the signal so that the image box will redraw
+
+	
+	Canvas::pCloud.loadFromFile(G_chooser->value());
 	smallRedrawSignal = 1;
 	imageRedrawSignal = 1;
-
+	bigRedrawSignal = 1;
+	canvas->redraw();
 	fprintf(stderr, "--------------------\n");
 }
 
@@ -86,18 +90,21 @@ void GUI::saveResultCallback(Fl_Widget*w, void*data) {
 void GUI::maximumAreaCallback(Fl_Widget*w, void*data) {
 	Canvas::pCloud.maximumAreaCoverage();
 	GUI::bigRedrawSignal = true;
+	canvas->redraw();
 }
 
 
 void GUI::cloudClearCallback(Fl_Widget*w, void*data) {
 	Canvas::pCloud.clear();
 	GUI::bigRedrawSignal = 1;
+	canvas->redraw();
 }
 
 
 void GUI::randomCallback(Fl_Widget*w, void*data) {
 	Canvas::pCloud.randomGen(100);
 	GUI::bigRedrawSignal = 1;
+	canvas->redraw();
 }
 
 
@@ -109,6 +116,7 @@ void Canvas::fl_normal_line(float x, float y, float x1, float y1) {
 // Function to handle mouse events such as drag, release, etc.
 int Canvas::handle(int e) {
 	int ret = Fl_Group::handle(e);
+
 	switch (e) {
 
 	// Mouse events

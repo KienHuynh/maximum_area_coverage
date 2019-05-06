@@ -88,7 +88,7 @@ public:
 
 class GUI {
 public:
-	Canvas *canvas;
+	static Canvas *canvas;
 
 	// Buttons
 	Fl_Button *exitBu;
