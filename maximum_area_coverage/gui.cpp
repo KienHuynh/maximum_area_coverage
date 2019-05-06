@@ -95,6 +95,12 @@ void GUI::cloudClearCallback(Fl_Widget*w, void*data) {
 }
 
 
+void GUI::randomCallback(Fl_Widget*w, void*data) {
+	Canvas::pCloud.randomGen(100);
+	GUI::bigRedrawSignal = 1;
+}
+
+
 void Canvas::fl_normal_line(float x, float y, float x1, float y1) {
 	fl_line(x, canvasHeight-y, x1, canvasHeight-y1);
 }
@@ -184,8 +190,8 @@ int Canvas::handle(int e) {
 
 
 void Canvas::float2CanvasCoord(float &x, float &y) {
-	x = x * (float)squareLength + origin;
-	y = canvasHeight - (y * (float)squareLength + origin);
+	x = ceil(x * (float)squareLength + origin + 0.5);
+	y = ceil(canvasHeight - (y * (float)squareLength + origin) + 0.5);
 }
 
 
@@ -263,6 +269,21 @@ void Canvas::drawCoords() {
 }
 
 
+void Canvas::drawArea() {
+	// Coordinates as a string
+	char s[80];
+	
+	sprintf_s(s, "area=%.5f", pCloud.area());
+	// Black rect
+	fl_color(FL_BLACK);
+	fl_rectf(Canvas::canvasWidth - 180, this->y()+25, 180, 25);
+	// White text
+	fl_color(FL_WHITE);
+	fl_font(FL_HELVETICA, 18);
+	fl_draw(s, Canvas::canvasWidth - 180 + 7, this->y() + 45);
+}
+
+
 void Canvas::drawAxes() {
 	// Draw the square
 	char dashStyle[3] = { 10,5,0 };
@@ -323,6 +344,7 @@ void Canvas::draw() {
 
 	drawAxes();
 	drawCoords();
+	drawArea();
 	drawRects();
 	drawPoints();
 }
@@ -375,6 +397,8 @@ GUI::GUI(int winWidth, int winHeight) {
 	maximumAreaBu->callback(maximumAreaCallback);
 	clearBu = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit*2, 160, 25, "Clear");
 	clearBu->callback(cloudClearCallback);
+	randomBu = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit * 3, 160, 25, "Random");
+	randomBu->callback(randomCallback);
 
 	// Create  the actual canvas
 	canvas = new Canvas(0, menuBarHeight, Canvas::canvasWidth, Canvas::canvasHeight, 0);

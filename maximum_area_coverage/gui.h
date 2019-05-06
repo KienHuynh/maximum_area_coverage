@@ -51,6 +51,9 @@ protected:
 	// Draw the rectangles
 	void drawRects();
 
+	// Display the area of the rectangles
+	void drawArea();
+
 	// The main draw function of canvas
 	void draw();
 
@@ -87,6 +90,7 @@ public:
 	// Buttons
 	Fl_Button *exitBu;
 	Fl_Button *maximumAreaBu;
+	Fl_Button *randomBu;
 	Fl_Button *clearBu;
 	Fl_Menu_Bar *menuBar;
 
@@ -113,6 +117,8 @@ public:
 	static void maximumAreaCallback(Fl_Widget*w, void*data);
 	// Callback function to clear the point cloud
 	static void cloudClearCallback(Fl_Widget*w, void*data);
+	// Callback function to create random points
+	static void randomCallback(Fl_Widget*w, void*data);
 };
 
 #endif
