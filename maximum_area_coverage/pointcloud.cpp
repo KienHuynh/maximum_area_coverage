@@ -222,11 +222,18 @@ void Polygon2D::merge(Polygon2D p) {
 
 		allPoly.push_back(poly);
 	}
-	points = allPoly[0];
-	for (int i = 1; i < allPoly.size(); i++) {
-		if (allPoly[i].size() > points.size()) points = allPoly[i];
-	}
 	
+	bool stop = false;
+	for (int i = 0; i < allPoly.size() && !stop; i++) {
+		Point2D tmp = Point2D(1, 1);
+		for (int j = 0; j < allPoly[i].size(); j++) {
+			if (allPoly[i][j] == tmp) {
+				points = allPoly[i];
+				stop = true;
+				break;
+			}
+		}
+	}
 }
 
 
