@@ -86,6 +86,9 @@ public:
 	// Merge a polygon with another
 	void merge(Polygon2D p);
 	void merge(Rectangle2D r);
+
+	// Clear the content
+	void clear();
 };
 
 

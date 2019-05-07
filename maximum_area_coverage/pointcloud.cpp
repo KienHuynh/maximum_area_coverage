@@ -232,6 +232,11 @@ void Polygon2D::merge(Rectangle2D r) {
 }
 
 
+void Polygon2D::clear() {
+	points.clear();
+}
+
+
 PointCloud::PointCloud() {
 	points.push_back(Point2D(0, 0));
 	rects.push_back(Rectangle2D(points[0], points[0]));
@@ -272,10 +277,13 @@ void PointCloud::clear() {
 	upperBoundary.clear();
 	upperBoundary.push_back(Point2D(1, 1));
 	frontier.push_back(false);
+	boundingPoly.clear();
+	
 }
 
 
 void PointCloud::randomGen(int n) {
+	clear();
 	for (int i = 0; i < n; i++) {
 		float x = 0;
 		float y = 0;
