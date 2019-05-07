@@ -1,4 +1,3 @@
-#pragma once
 #ifndef GUI_H
 #define GUI_H
 #include <iostream>
@@ -22,6 +21,7 @@
 
 // Local includes
 #include "pointcloud.h"
+#include "config.h"
 
 // GLOBALS
 static Fl_Input        *G_inptitle = NULL;
@@ -92,7 +92,8 @@ public:
 
 	// Buttons
 	Fl_Button *exitBu;
-	Fl_Button *maximumAreaBu;
+	Fl_Button *runStepBu;
+	Fl_Button *runAllBu;
 	Fl_Button *randomBu;
 	Fl_Button *clearBu;
 	Fl_Menu_Bar *menuBar;
@@ -101,11 +102,8 @@ public:
 
 	static std::string canvasFileName;
 
-	// Small redraw signal informs the canvas that it only needs add more things on the canvas
-	static bool smallRedrawSignal;
 	// Big redraw signal makes the canvas wipe everything, it's a bit slower so normally the small signal is preferred
 	static bool bigRedrawSignal;
-	static bool imageRedrawSignal;
 
 	GUI(int winWidth, int winHeight);
 	~GUI();
@@ -116,7 +114,9 @@ public:
 	static void browseCallback(Fl_Widget*w, void*data);
 	// Callback function for save button
 	static void saveResultCallback(Fl_Widget*w, void*data);
-	// Callback function for finding the maximum area coverage
+	// Callback function for finding the maximum area coverage, one step at a time
+	static void maximumAreaCallbackStep(Fl_Widget*w, void*data);
+	// Callback function to run the full algo
 	static void maximumAreaCallback(Fl_Widget*w, void*data);
 	// Callback function to clear the point cloud
 	static void cloudClearCallback(Fl_Widget*w, void*data);

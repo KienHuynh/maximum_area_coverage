@@ -4,9 +4,7 @@ int Canvas::canvasWidth = 0;
 int Canvas::canvasHeight = 0;
 PointCloud Canvas::pCloud;
 
-bool GUI::smallRedrawSignal = 0;
 bool GUI::bigRedrawSignal = 0;
-bool GUI::imageRedrawSignal = 0;
 std::string GUI::canvasFileName = "";
 Canvas* GUI::canvas = NULL;
 
@@ -48,9 +46,6 @@ void GUI::browseCallback(Fl_Widget*w, void*data) {
 
 	
 	Canvas::pCloud.loadFromFile(G_chooser->value());
-	smallRedrawSignal = 1;
-	imageRedrawSignal = 1;
-	bigRedrawSignal = 1;
 	canvas->redraw();
 	fprintf(stderr, "--------------------\n");
 }
@@ -87,24 +82,31 @@ void GUI::saveResultCallback(Fl_Widget*w, void*data) {
 }
 
 
-void GUI::maximumAreaCallback(Fl_Widget*w, void*data) {
+void GUI::maximumAreaCallbackStep(Fl_Widget*w, void*data) {
 	Canvas::pCloud.maximumAreaCoverage();
-	GUI::bigRedrawSignal = true;
+	canvas->redraw();
+}
+
+
+void GUI::maximumAreaCallback(Fl_Widget*w, void*data) {
+	while (canvas->pCloud.points.size() > 0) {
+		Canvas::pCloud.maximumAreaCoverage();
+	}
 	canvas->redraw();
 }
 
 
 void GUI::cloudClearCallback(Fl_Widget*w, void*data) {
 	Canvas::pCloud.clear();
-	GUI::bigRedrawSignal = 1;
 	canvas->redraw();
+	bigRedrawSignal = true;
 }
 
 
 void GUI::randomCallback(Fl_Widget*w, void*data) {
-	Canvas::pCloud.randomGen(100);
-	GUI::bigRedrawSignal = 1;
+	Canvas::pCloud.randomGen(config::numRandom);
 	canvas->redraw();
+	bigRedrawSignal = true;
 }
 
 
@@ -139,7 +141,7 @@ int Canvas::handle(int e) {
 		}
 
 		ret = 1;
-		GUI::smallRedrawSignal = 1;
+		redraw();
 		break;
 	}
 	case FL_PUSH: {
@@ -340,17 +342,12 @@ void Canvas::drawAxes() {
 
 
 void Canvas::draw() {
-	if (GUI::smallRedrawSignal) {
-		this->redraw();
-		GUI::smallRedrawSignal = 0;
-	}
 
 	if (GUI::bigRedrawSignal) {
 		// Not sure how do you clear drawn objects in FLTK so I just draw a white rectangle instead
 		// TODO: find out how to properly clear things
 		fl_color(255);
-		fl_rectf(0, 0, canvasWidth, canvasHeight);
-		this->redraw();
+		fl_rectf(0, 0, Canvas::canvasWidth, Canvas::canvasHeight);
 		GUI::bigRedrawSignal = 0;
 	}
 
@@ -420,11 +417,13 @@ GUI::GUI(int winWidth, int winHeight) {
 	menu->add("File/Save", FL_CTRL + 's', saveResultCallback);
 
 	// Assign callbacks to corresponding buttons
-	maximumAreaBu = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit, 160, 25, "Run");
-	maximumAreaBu->callback(maximumAreaCallback);
-	clearBu = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit*2, 160, 25, "Clear");
+	runAllBu = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit, 160, 25, "Run");
+	runAllBu->callback(maximumAreaCallback);
+	runStepBu = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit * 2, 160, 25, "Step");
+	runStepBu->callback(maximumAreaCallbackStep);
+	clearBu = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit * 3, 160, 25, "Clear");
 	clearBu->callback(cloudClearCallback);
-	randomBu = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit * 3, 160, 25, "Random");
+	randomBu = new Fl_Button(Canvas::canvasWidth + xButtonUnit, menuBarHeight + yButtonUnit * 4, 160, 25, "Random");
 	randomBu->callback(randomCallback);
 
 	// Create  the actual canvas
@@ -439,5 +438,9 @@ GUI::~GUI() {
 	delete canvas;
 	delete win;
 	delete exitBu;
-	delete maximumAreaBu;
+	delete runStepBu;
+	delete runAllBu;
+	delete randomBu;
+	delete clearBu;
+	delete menuBar;
 }
