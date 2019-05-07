@@ -223,6 +223,10 @@ void Polygon2D::merge(Polygon2D p) {
 		allPoly.push_back(poly);
 	}
 	points = allPoly[0];
+	for (int i = 1; i < allPoly.size(); i++) {
+		if (allPoly[i].size() > points.size()) points = allPoly[i];
+	}
+	
 }
 
 
